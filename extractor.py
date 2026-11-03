@@ -111,13 +111,15 @@ def extract_article(url: str) -> dict:
                         "text": full_text
                     }
     except Exception as e:
-        print(f"Extraction network error ({e}), falling back to cached article if available.")
+        last_error = f"{type(e).__name__}: {str(e)}"
+        print(f"Extraction network error ({last_error}), falling back to cached article if available.")
 
     if cached:
         return cached
 
     # If completely unknown URL and failed to fetch
-    raise RuntimeError(f"Could not extract article content from {url}. Please verify the URL or try the sample articles.")
+    err_detail = f" (Details: {last_error})" if 'last_error' in locals() else ""
+    raise RuntimeError(f"Could not extract article content from {url}{err_detail}. Please verify the URL or try the sample articles.")
 
 
 def chunk_text(text: str, chunk_size: int = 800, overlap: int = 150) -> list:
