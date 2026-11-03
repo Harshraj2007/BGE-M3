@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bilingual Telugu–English News Assistant</title>
-  <link rel="stylesheet" href="/static/style.css?v=8">
+  <link rel="stylesheet" href="/static/style.css?v=9">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;600&display=swap" rel="stylesheet">
@@ -22,9 +22,31 @@
         <button class="badge-pill" id="genToggleBtn" title="Toggle grounded answer generation">
           <span class="status-dot"></span> Generation enabled
         </button>
+        <!-- Dark Mode Toggle -->
+        <button class="icon-btn" id="darkModeBtn" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
       </div>
     </div>
   </header>
+
+  <!-- Article Feed Sidebar (off-canvas) -->
+  <div id="articleFeedOverlay" class="feed-overlay hidden" aria-hidden="true"></div>
+  <aside id="articleFeedSidebar" class="article-feed-sidebar" aria-label="Article browser">
+    <div class="feed-header">
+      <h2>📰 Article Browser</h2>
+      <button id="closeFeedBtn" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="feed-search">
+      <input type="text" id="feedSearchInput" placeholder="Search articles..." class="feed-search-input">
+    </div>
+    <div class="feed-tabs">
+      <button class="feed-tab active" data-lang="all">All</button>
+      <button class="feed-tab" data-lang="en">English</button>
+      <button class="feed-tab" data-lang="te">తెలుగు</button>
+    </div>
+    <div id="feedArticleList" class="feed-article-list">
+      <!-- Dynamically populated -->
+    </div>
+  </aside>
 
   <!-- Main Content Cards -->
   <main class="main-container">
@@ -34,6 +56,8 @@
       <div class="step-header">
         <span class="step-number">1</span>
         <h2>Load an article</h2>
+        <!-- Article Feed Browse Button -->
+        <button class="btn btn-outline btn-sm" id="openFeedBtn" style="margin-left:auto;">📰 Browse Articles</button>
       </div>
 
       <!-- Input Mode Tabs -->
@@ -62,7 +86,7 @@
           rows="5" 
           placeholder="Paste ANY news headline and body text here from TeluguPeople or any other source (Telugu, English, or Code-mixed)..."
         ></textarea>
-        <button id="loadCustomTextBtn" class="btn btn-primary" style="margin-top: 8px;">Load & Index Article</button>
+        <button id="loadCustomTextBtn" class="btn btn-primary" style="margin-top: 8px;">Load &amp; Index Article</button>
       </div>
 
       <div class="try-row" id="sampleLinksRow">
@@ -87,6 +111,9 @@
           <span><strong>Chunks:</strong> <span id="metaChunks">0</span></span>
           <span><strong>Source ID:</strong> <span id="metaNewsId">108267</span></span>
         </div>
+        <!-- Entity tags row (populated dynamically) -->
+        <div id="entityTagsRow" class="entity-tags-row hidden"></div>
+        <!-- Article body preview with entity highlighting -->
         <div id="articleBodyPreview" class="article-body-preview hidden">
           <p id="articleBodyText"></p>
         </div>
@@ -108,19 +135,19 @@
         <div class="model-card" id="cardE5" data-model="e5">
           <div class="model-card-header">
             <span class="model-name">multilingual-E5-base</span>
-            <span class="badge badge-loaded">loaded</span>
+            <span class="badge-loaded">LOADED</span>
           </div>
           <div class="model-hf-name">intfloat/multilingual-e5-base</div>
           <div class="model-specs">768-dim · max 512 tokens · asymmetric prefixes</div>
           <div class="model-revision">revision: d12875059715...</div>
-          <div class="model-note">Pinned revision. Requires asymmetric query/passage prefixes.</div>
+          <div class="model-note amber">Pinned revision. Requires asymmetric query/passage prefixes.</div>
         </div>
 
-        <!-- Model Card 2: BGE-M3 (Selected by default as in screenshot) -->
+        <!-- Model Card 2: BGE-M3 -->
         <div class="model-card selected" id="cardBge" data-model="bge_m3">
           <div class="model-card-header">
             <span class="model-name">BGE-M3</span>
-            <span class="badge badge-loaded">loaded</span>
+            <span class="badge-loaded">LOADED</span>
           </div>
           <div class="model-hf-name">BAAI/bge-m3</div>
           <div class="model-specs">1024-dim · max 8192 tokens · prefix-free</div>
@@ -169,7 +196,7 @@
       <!-- Loading Indicator -->
       <div id="loadingIndicator" class="loading-box hidden">
         <div class="spinner"></div>
-        <span id="loadingText">Retrieving with BGE-M3 & generating response...</span>
+        <span id="loadingText">Retrieving with BGE-M3 &amp; generating response...</span>
       </div>
 
       <!-- Results Display Section -->
@@ -180,7 +207,14 @@
           <div class="answer-header">
             <span class="answer-label">Assistant Response</span>
             <div class="audio-controls">
-              <button id="playAudioBtn" class="btn btn-audio">🔊 Listen (Voice)</button>
+              <!-- TTS Controls -->
+              <div class="tts-controls">
+                <select id="ttsVoiceSelect" class="tts-voice-select" title="Select voice">
+                  <option value="auto">🌐 Auto-detect language</option>
+                </select>
+                <button id="playAudioBtn" class="btn btn-audio">🔊 Listen</button>
+                <button id="stopAudioBtn" class="btn btn-audio-stop hidden">⏹ Stop</button>
+              </div>
               <audio id="ttsAudio" class="hidden" controls></audio>
             </div>
           </div>
@@ -191,6 +225,9 @@
             <span id="retrievalModelBadge" class="tag-badge">Model: BGE-M3</span>
             <span id="retrievalDimBadge" class="tag-badge">Dim: 1024d</span>
             <span id="retrievalLatencyBadge" class="tag-badge">Retrieval: 48.2 ms</span>
+            <!-- Share / Export buttons -->
+            <button id="copyAnswerBtn" class="btn-inline-action" title="Copy answer to clipboard">📋 Copy</button>
+            <button id="exportPdfBtn" class="btn-inline-action" title="Export Q&amp;A as PDF">📄 Export PDF</button>
           </div>
         </div>
 
@@ -229,6 +266,9 @@
     <p>Team Vaani · VIT-AP University · Bilingual News Retrieval-Augmented Generation Benchmark</p>
   </footer>
 
-  <script src="/static/app.js?v=8"></script>
+  <!-- Export PDF hidden template -->
+  <div id="pdfExportArea" class="hidden" aria-hidden="true"></div>
+
+  <script src="/static/app.js?v=9"></script>
 </body>
 </html>
