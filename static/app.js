@@ -315,39 +315,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-      // Render E5 side
-      e5CompMeta.textContent = `Retrieval Latency: ${data.e5.latency_ms} ms | Dim: 768d`;
-      e5CompChunks.innerHTML = data.e5.results.map(r => `
-        <div class="chunk-card" style="margin-top: 8px;">
-          <div class="chunk-header">
-            <span>Rank #${r.rank} (${r.chunk_id})</span>
-            <span class="score-badge">${r.score}</span>
-          </div>
-          <div class="chunk-text" style="font-size: 13px;">${r.text.substring(0, 160)}...</div>
-        </div>
-      `).join("");
-
-      // Render BGE side
-      bgeCompMeta.textContent = `Retrieval Latency: ${data.bge_m3.latency_ms} ms | Dim: 1024d`;
-      bgeCompChunks.innerHTML = data.bge_m3.results.map(r => `
-        <div class="chunk-card" style="margin-top: 8px;">
-          <div class="chunk-header">
-            <span>Rank #${r.rank} (${r.chunk_id})</span>
-            <span class="score-badge">${r.score}</span>
-          </div>
-          <div class="chunk-text" style="font-size: 13px;">${r.text.substring(0, 160)}...</div>
-        </div>
-      `).join("");
-
-      comparisonBox.classList.remove("hidden");
-      resultsSection.classList.remove("hidden");
-    } catch (err) {
-      alert(`Comparison failed: ${err.message}`);
-    } finally {
-      loadingIndicator.classList.add("hidden");
-    }
-  });
-
   // ============================================================
   // Audio Playback (Web Speech API + Backend fallback)
   // ============================================================
