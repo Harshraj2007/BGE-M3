@@ -13,7 +13,7 @@ from pathlib import Path
 
 # Local imports
 from extractor import extract_article, chunk_text, detect_language
-from rag_engine import rag_pipeline, MODEL_SPECS
+from rag_engine import rag_pipeline, MODEL_SPECS, generate_suggested_prompts
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -139,11 +139,13 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
 
                 chunks = chunk_text(article["text"])
                 rag_pipeline.set_article(article, chunks)
+                prompts = generate_suggested_prompts(article)
 
                 self._send_json({
                     "status": "ok",
                     "article": article,
-                    "chunk_count": len(chunks)
+                    "chunk_count": len(chunks),
+                    "suggested_prompts": prompts
                 })
             except Exception as e:
                 self._send_json({"error": str(e)}, status=500)

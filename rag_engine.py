@@ -74,6 +74,94 @@ def is_summary_query(text: str) -> bool:
     return any(k in t for k in keywords)
 
 
+def generate_suggested_prompts(article: dict) -> list:
+    """Generate dynamic, context-aware quick prompts tailored to the active article."""
+    if not article:
+        return []
+
+    text = article.get("text", "")
+    title = article.get("title", "")
+    nid = str(article.get("news_id", ""))
+    lang = article.get("language", "en")
+    lower = text.lower()
+
+    # 1. School Boy Tragedy (108267)
+    if "108267" in nid or "ప్రణయ్" in text or "లిటిల్ గార్డెన్" in text:
+        return [
+            {"query": "హోంవర్క్ విషయంలో ఉపాధ్యాయురాలు ఏం చేసింది?", "label": "ఉపాధ్యాయురాలి చర్య?"},
+            {"query": "మృతి చెందిన బాలుడి పేరు ఏమిటి?", "label": "బాలుడి పేరు?"},
+            {"query": "పోలీసులు ఎలాంటి చర్యలు తీసుకున్నారు?", "label": "పోలీసుల చర్యలు?"},
+            {"query": "Why did the student collapse in class?", "label": "Why collapsed?"},
+            {"query": "Summarize this article", "label": "📄 Summarize Article"},
+            {"query": "ఈ కథనం పూర్తి సారాంశం చెప్పండి", "label": "📄 తెలుగు సారాంశం"}
+        ]
+
+    # 2. Ram Charan RC17 (109199)
+    if "109199" in nid or "rc17" in lower or ("charan" in lower and "sukumar" in lower):
+        return [
+            {"query": "Who attended the RC17 pooja launch ceremony?", "label": "Who attended launch?"},
+            {"query": "Who is composing the music for RC17?", "label": "Music composer?"},
+            {"query": "Which production company is producing RC17?", "label": "Producers?"},
+            {"query": "రామ్ చరణ్, సుకుమార్ కలయికలో గతంలో వచ్చిన సినిమా ఏది?", "label": "గతంలో వచ్చిన చిత్రం?"},
+            {"query": "Summarize this article", "label": "📄 Summarize Article"},
+            {"query": "ఈ కథనం పూర్తి సారాంశం చెప్పండి", "label": "📄 తెలుగు సారాంశం"}
+        ]
+
+    # 3. Cyclone Murasu (109200)
+    if "109200" in nid or "murasu" in lower or "cyclone" in lower:
+        return [
+            {"query": "Where did Cyclone Murasu make landfall?", "label": "Landfall location?"},
+            {"query": "What was the maximum wind speed during landfall?", "label": "Wind speed?"},
+            {"query": "Which districts faced the most disruption?", "label": "Affected districts?"},
+            {"query": "విద్యుత్ పునరుద్ధరణ కోసం తమిళనాడు ఎంతమందిని పంపింది?", "label": "తమిళనాడు సహాయం?"},
+            {"query": "Summarize this article", "label": "📄 Summarize Article"},
+            {"query": "ఈ కథనం పూర్తి సారాంశం చెప్పండి", "label": "📄 తెలుగు సారాంశం"}
+        ]
+
+    # 4. The Paradise (108330)
+    if "108330" in nid or "paradise" in lower or "keerthy" in lower:
+        return [
+            {"query": "Who joined Nani in The Paradise film?", "label": "Who joined Nani?"},
+            {"query": "Who is directing The Paradise film?", "label": "Who is directing?"},
+            {"query": "What is the name of the special song featuring Keerthy Suresh?", "label": "Special song?"},
+            {"query": "చిత్రం ఏయే భాషల్లో విడుదల కానుంది?", "label": "విడుదల భాషలు?"},
+            {"query": "Summarize this article", "label": "📄 Summarize Article"},
+            {"query": "ఈ కథనం పూర్తి సారాంశం చెప్పండి", "label": "📄 తెలుగు సారాంశం"}
+        ]
+
+    # 5. Nobel Peace (108822)
+    if "108822" in nid or "పిళ్లై" in text or "nobel" in lower:
+        return [
+            {"query": "ఎవరిని నోబెల్ శాంతి పురస్కారానికి ఎంపిక చేశారు?", "label": "పురస్కార గ్రహీత?"},
+            {"query": "నవీ పిళ్లై ఏ దేశానికి చెందినవారు?", "label": "ఏ దేశం?"},
+            {"query": "Who was selected for the Nobel Peace Prize?", "label": "Who was selected?"},
+            {"query": "Summarize this article", "label": "📄 Summarize Article"},
+            {"query": "ఈ కథనం పూర్తి సారాంశం చెప్పండి", "label": "📄 తెలుగు సారాంశం"}
+        ]
+
+    # Dynamic Generator for Any Arbitrary or Pasted Article
+    clean_title = re.sub(r'[\r\n]+', ' ', title).split("-")[0].strip()
+    if len(clean_title) > 35:
+        clean_title = clean_title[:35] + "..."
+
+    if lang == "te":
+        return [
+            {"query": f"ఈ కథనంలోని ప్రధాన సంఘటన లేదా ప్రకటన ఏమిటి?", "label": "ప్రధాన సంఘటన?"},
+            {"query": f"ఇందులో పేర్కొన్న కీలక వ్యక్తులు, సంస్థలు మరియు వివరాలు ఏమిటి?", "label": "కీలక వివరాలు?"},
+            {"query": f"సంబంధిత అధికారులు లేదా సంస్థలు ఎలాంటి చర్యలు తీసుకున్నాయి?", "label": "అధికారిక చర్యలు?"},
+            {"query": "ఈ కథనం పూర్తి సారాంశం చెప్పండి", "label": "📄 తెలుగు సారాంశం"},
+            {"query": "Summarize this article in English", "label": "📄 English Summary"}
+        ]
+    else:
+        return [
+            {"query": f"What is the main event or development reported regarding {clean_title}?", "label": "Main development?"},
+            {"query": f"Who are the key people or organizations mentioned?", "label": "Key people/orgs?"},
+            {"query": f"What official statements or next steps were announced?", "label": "Official statements?"},
+            {"query": "Summarize this article", "label": "📄 Summarize Article"},
+            {"query": "ఈ కథనం పూర్తి సారాంశం చెప్పండి", "label": "📄 తెలుగు సారాంశం"}
+        ]
+
+
 class LightweightBilingualEncoder:
     """
     High-fidelity semantic encoder supporting Telugu & English subword character n-grams.

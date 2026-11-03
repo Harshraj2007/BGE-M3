@@ -144,6 +144,11 @@ document.addEventListener("DOMContentLoaded", () => {
       resultsSection.classList.add("hidden");
       comparisonBox.classList.add("hidden");
 
+      // Dynamically render context-aware prompt chips for this article
+      if (data.suggested_prompts && data.suggested_prompts.length) {
+        renderPromptChips(data.suggested_prompts);
+      }
+
       console.log(`✅ Loaded article with ${data.chunk_count} chunks.`);
     } catch (err) {
       alert(`Error loading article: ${err.message}`);
@@ -188,23 +193,40 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleArticleBodyBtn.textContent = isHidden ? "View Text ▼" : "Hide Text ▲";
   });
 
-  // Prompt Chips
-  promptChips.forEach(chip => {
-    chip.addEventListener("click", async () => {
-      const q = chip.getAttribute("data-q");
-      questionInput.value = q;
+  // Context-Aware Dynamic Prompt Chips
+  const promptChipsContainer = document.getElementById("promptChipsContainer") || document.querySelector(".prompt-chips");
 
-      // Smart article auto-switch if prompt belongs to the other article
-      const lower = q.toLowerCase();
-      if ((lower.includes("nani") || lower.includes("paradise")) && !articleUrlInput.value.includes("108330")) {
-        await loadArticle("https://telugupeople.com/news/news.asp?newsId=108330");
-      } else if ((q.includes("బాలుడు") || q.includes("హోంవర్క్") || q.includes("ప్రణయ్")) && !articleUrlInput.value.includes("108267")) {
-        await loadArticle("https://telugupeople.com/news/news.asp?newsID=108267");
-      }
+  function renderPromptChips(prompts) {
+    if (!promptChipsContainer || !prompts || !prompts.length) return;
+    promptChipsContainer.innerHTML = '<span class="chip-label">Quick Prompts:</span>';
 
-      executeAskQuestion();
+    prompts.forEach(p => {
+      const chip = document.createElement("button");
+      chip.className = "chip";
+      chip.setAttribute("data-q", p.query);
+      chip.textContent = p.label || p.query;
+      chip.addEventListener("click", () => {
+        questionInput.value = p.query;
+        const isSum = p.query.toLowerCase().includes("summar") || p.query.includes("సారాంశం");
+        executeAskQuestion(isSum);
+      });
+      promptChipsContainer.appendChild(chip);
     });
-  });
+  }
+
+  // Bind initial chips
+  if (promptChips && promptChips.length) {
+    promptChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        const q = chip.getAttribute("data-q");
+        if (q) {
+          questionInput.value = q;
+          const isSum = q.toLowerCase().includes("summar") || q.includes("సారాంశం");
+          executeAskQuestion(isSum);
+        }
+      });
+    });
+  }
 
   // ============================================================
   // Question & Query Execution
