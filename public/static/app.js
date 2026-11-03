@@ -97,12 +97,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const retrievalModelBadge  = document.getElementById("retrievalModelBadge");
   const retrievalDimBadge    = document.getElementById("retrievalDimBadge");
   const retrievalLatencyBadge = document.getElementById("retrievalLatencyBadge");
+  const geminiEngineBadge    = document.getElementById("geminiEngineBadge");
   const chunksList            = document.getElementById("chunksList");
   const comparisonBox         = document.getElementById("comparisonBox");
   const e5CompMeta            = document.getElementById("e5CompMeta");
   const e5CompChunks          = document.getElementById("e5CompChunks");
   const bgeCompMeta           = document.getElementById("bgeCompMeta");
   const bgeCompChunks         = document.getElementById("bgeCompChunks");
+
+  // Gemini API Key Modal Elements
+  const apiKeyModalBtn    = document.getElementById("apiKeyModalBtn");
+  const closeApiKeyModal  = document.getElementById("closeApiKeyModal");
+  const apiKeyModal       = document.getElementById("apiKeyModal");
+  const geminiApiKeyInput = document.getElementById("geminiApiKeyInput");
+  const saveApiKeyBtn     = document.getElementById("saveApiKeyBtn");
+  const clearApiKeyBtn    = document.getElementById("clearApiKeyBtn");
+  const apiKeyStatus      = document.getElementById("apiKeyStatus");
+
+  let savedGeminiKey = localStorage.getItem("vaani_gemini_api_key") || "";
+  if (savedGeminiKey && apiKeyModalBtn) {
+    apiKeyModalBtn.style.color = "#4ade80";
+  }
 
   // Feed sidebar
   const openFeedBtn       = document.getElementById("openFeedBtn");
@@ -130,6 +145,46 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("vaani-theme", next);
     darkModeBtn.textContent = next === "dark" ? "☀️" : "🌙";
   });
+
+  // ============================================================
+  // ①B GEMINI API KEY SETUP
+  // ============================================================
+  if (apiKeyModalBtn && apiKeyModal) {
+    apiKeyModalBtn.addEventListener("click", () => {
+      apiKeyModal.classList.remove("hidden");
+      if (savedGeminiKey && geminiApiKeyInput) geminiApiKeyInput.value = savedGeminiKey;
+    });
+  }
+  if (closeApiKeyModal && apiKeyModal) {
+    closeApiKeyModal.addEventListener("click", () => apiKeyModal.classList.add("hidden"));
+    apiKeyModal.addEventListener("click", (e) => {
+      if (e.target === apiKeyModal) apiKeyModal.classList.add("hidden");
+    });
+  }
+  if (saveApiKeyBtn) {
+    saveApiKeyBtn.addEventListener("click", () => {
+      const val = (geminiApiKeyInput ? geminiApiKeyInput.value : "").trim();
+      if (!val) { alert("Please enter a valid Gemini API key (starts with AIza...)."); return; }
+      localStorage.setItem("vaani_gemini_api_key", val);
+      savedGeminiKey = val;
+      if (apiKeyStatus) apiKeyStatus.textContent = "✅ Saved & Active!";
+      if (apiKeyModalBtn) apiKeyModalBtn.style.color = "#4ade80";
+      setTimeout(() => {
+        if (apiKeyModal) apiKeyModal.classList.add("hidden");
+        if (apiKeyStatus) apiKeyStatus.textContent = "";
+      }, 1000);
+    });
+  }
+  if (clearApiKeyBtn) {
+    clearApiKeyBtn.addEventListener("click", () => {
+      localStorage.removeItem("vaani_gemini_api_key");
+      savedGeminiKey = "";
+      if (geminiApiKeyInput) geminiApiKeyInput.value = "";
+      if (apiKeyStatus) apiKeyStatus.textContent = "Key cleared.";
+      if (apiKeyModalBtn) apiKeyModalBtn.style.color = "";
+      setTimeout(() => { if (apiKeyStatus) apiKeyStatus.textContent = ""; }, 1500);
+    });
+  }
 
   // ============================================================
   // ② MODEL SELECTION
@@ -487,7 +542,8 @@ document.addEventListener("DOMContentLoaded", () => {
           query: effectiveQuery,
           model_id: activeModel,
           url: articleUrlInput.value.trim(),
-          is_summary: isSummary
+          is_summary: isSummary,
+          gemini_api_key: savedGeminiKey || ""
         })
       });
 
@@ -505,6 +561,10 @@ document.addEventListener("DOMContentLoaded", () => {
       retrievalModelBadge.textContent  = `Model: ${data.model_name}`;
       retrievalDimBadge.textContent    = `Dim: ${data.dim}d`;
       retrievalLatencyBadge.textContent = `Retrieval: ${data.latency_ms} ms`;
+
+      if (geminiEngineBadge) {
+        geminiEngineBadge.classList.toggle("hidden", !data.gemini_active);
+      }
 
       // Save to history
       qaHistory.push({ q: effectiveQuery, a: data.answer, model: data.model_name, latency: data.latency_ms });

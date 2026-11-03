@@ -466,9 +466,11 @@ Article:
                 f"• Current Status: {conclusion or 'Further updates on the event are anticipated.'}"
             )
 
-    def generate_grounded_answer(self, query: str, retrieved_chunks: list, is_summary: bool = False) -> str:
+    def generate_grounded_answer(self, query: str, retrieved_chunks: list, is_summary: bool = False, gemini_api_key: str = None) -> str:
         """
         Synthesize concise, grounded response or complete article summary.
+        Uses Gemini API for conversational reasoning if key is provided (via env or request),
+        otherwise falls back to extractive grounded synthesis.
         """
         # Detect query language
         telugu_chars = sum('\u0c00' <= ch <= '\u0c7f' for ch in query)
@@ -482,36 +484,52 @@ Article:
             return "ఈ సమాచారం వ్యాసంలో అందుబాటులో లేదు." if user_lang == "te" else "The article does not provide this information."
 
         context = "\n".join([r["text"] for r in retrieved_chunks])
+        article_title = self.article.get("title", "News Article") if self.article else "News Article"
         lower_q = query.lower()
 
-        # Check for Gemini API key if user has one
-        gemini_key = os.environ.get("GEMINI_API_KEY")
+        # Check for Gemini API key (from parameter or environment variable)
+        gemini_key = (gemini_api_key or os.environ.get("GEMINI_API_KEY") or "").strip()
         if gemini_key:
-            try:
-                import urllib.request
-                lang_inst = "Respond in natural spoken Telugu script." if user_lang == "te" else "Respond in clear, concise English."
-                prompt = f"""You are the TeluguPeople Bilingual Voice Assistant.
-Answer the user question using ONLY the provided news context below.
-Keep your response short, conversational, and direct (1 to 2 sentences max) without markdown asterisks or bullet points.
-{lang_inst}
+            import urllib.request
+            lang_inst = "Respond in natural, fluent Telugu script." if user_lang == "te" else "Respond in clear, natural English."
+            prompt = f"""You are the Bilingual Telugu–English News Assistant for Team Vaani (VIT-AP University).
+You are answering user questions based on the following news article:
 
-Context:
+Article Title: {article_title}
+Retrieved Context:
 {context}
 
-Question:
-{query}"""
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
-                req = urllib.request.Request(
-                    url,
-                    data=json.dumps({"contents": [{"parts": [{"text": prompt}]}]}).encode("utf-8"),
-                    headers={"Content-Type": "application/json"}
-                )
-                with urllib.request.urlopen(req, timeout=8) as resp:
-                    data = json.loads(resp.read().decode())
-                    answer = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                    return answer
-            except Exception as e:
-                print("Gemini API fallback to local grounded synthesis:", e)
+User Question:
+{query}
+
+Instructions:
+1. Answer thoughtfully and conversationally based on the provided context.
+2. If the user asks an analytical, strategic, or opinion-based question (e.g. comparisons, industry positioning, future outlook), provide reasoned analysis grounded in what the article mentions (such as director, previous films, scale, cast, crew), while acknowledging any speculative aspects not explicitly stated in the news text.
+3. Keep your response direct, engaging, and concise (2 to 4 sentences). Avoid markdown asterisks, avoid bullet points, and avoid robotic phrasing.
+4. {lang_inst}"""
+
+            # Try modern Gemini models with fallback
+            candidate_models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"]
+            for model_name in candidate_models:
+                try:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={gemini_key}"
+                    payload_data = json.dumps({
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 300}
+                    }).encode("utf-8")
+                    req = urllib.request.Request(
+                        url,
+                        data=payload_data,
+                        headers={"Content-Type": "application/json"}
+                    )
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        data = json.loads(resp.read().decode())
+                        answer = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        if answer:
+                            return answer
+                except Exception as e:
+                    print(f"Gemini model {model_name} attempt error: {e}")
+                    continue
 
         # High-precision grounded extractive synthesis
         # 1. School boy case (108267)

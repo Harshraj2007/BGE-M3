@@ -163,6 +163,7 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
             model_id = payload.get("model_id", rag_pipeline.active_model_id)
             url = payload.get("url", "").strip()
             is_summary = payload.get("is_summary", False)
+            client_gemini_key = payload.get("gemini_api_key", "").strip()
 
             if not query and not is_summary:
                 self._send_json({"error": "Query is required"}, status=400)
@@ -193,8 +194,11 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
                 answer = rag_pipeline.generate_grounded_answer(
                     query=query,
                     retrieved_chunks=retrieval["results"],
-                    is_summary=is_summary
+                    is_summary=is_summary,
+                    gemini_api_key=client_gemini_key
                 )
+
+                active_gemini = bool(client_gemini_key or os.environ.get("GEMINI_API_KEY"))
 
                 self._send_json({
                     "status": "ok",
@@ -204,7 +208,8 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
                     "dim": retrieval["dim"],
                     "latency_ms": retrieval["latency_ms"],
                     "answer": answer,
-                    "chunks": retrieval["results"]
+                    "chunks": retrieval["results"],
+                    "gemini_active": active_gemini
                 })
             except Exception as e:
                 self._send_json({"error": str(e)}, status=500)

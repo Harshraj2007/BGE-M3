@@ -22,6 +22,8 @@
         <button class="badge-pill" id="genToggleBtn" title="Toggle grounded answer generation">
           <span class="status-dot"></span> Generation enabled
         </button>
+        <!-- Gemini Key Modal Button -->
+        <button class="icon-btn" id="apiKeyModalBtn" title="Configure Gemini API Key" aria-label="Configure Gemini API Key">🔑</button>
         <!-- Dark Mode Toggle -->
         <button class="icon-btn" id="darkModeBtn" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
       </div>
@@ -225,6 +227,7 @@
             <span id="retrievalModelBadge" class="tag-badge">Model: BGE-M3</span>
             <span id="retrievalDimBadge" class="tag-badge">Dim: 1024d</span>
             <span id="retrievalLatencyBadge" class="tag-badge">Retrieval: 48.2 ms</span>
+            <span id="geminiEngineBadge" class="tag-badge hidden" style="background:#e0f2fe;color:#0369a1;font-weight:600;">🤖 Gemini Active</span>
             <!-- Share / Export buttons -->
             <button id="copyAnswerBtn" class="btn-inline-action" title="Copy answer to clipboard">📋 Copy</button>
             <button id="exportPdfBtn" class="btn-inline-action" title="Export Q&amp;A as PDF">📄 Export PDF</button>
@@ -269,6 +272,25 @@
   <!-- Export PDF hidden template -->
   <div id="pdfExportArea" class="hidden" aria-hidden="true"></div>
 
-  <script src="/static/app.js?v=9"></script>
+  <!-- Gemini API Key Modal -->
+  <div id="apiKeyModal" class="feed-overlay hidden" style="display:flex;align-items:center;justify-content:center;padding:16px;z-index:300;">
+    <div class="step-card" style="max-width:440px;width:100%;margin:0;position:relative;z-index:310;box-shadow:0 8px 30px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="font-size:16px;font-weight:700;">🔑 Gemini API Key Setup</h3>
+        <button id="closeApiKeyModal" class="btn-text" style="font-size:16px;cursor:pointer;">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.5;">
+        Enter your Google Gemini API key to enable multi-sentence conversational reasoning and cross-topic analysis. It is securely saved in your browser's local storage.
+      </p>
+      <input type="password" id="geminiApiKeyInput" class="url-input" placeholder="AIzaSy..." style="width:100%;margin-bottom:10px;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;">
+        <span id="apiKeyStatus" style="font-size:12px;color:#15803d;margin-right:auto;"></span>
+        <button id="clearApiKeyBtn" class="btn btn-secondary btn-sm">Clear</button>
+        <button id="saveApiKeyBtn" class="btn btn-primary btn-sm">Save &amp; Activate</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=10"></script>
 </body>
 </html>
