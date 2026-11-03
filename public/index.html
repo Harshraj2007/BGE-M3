@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bilingual Telugu–English News Assistant</title>
-  <link rel="stylesheet" href="/static/style.css?v=6">
+  <link rel="stylesheet" href="/static/style.css?v=7">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;600&display=swap" rel="stylesheet">
@@ -49,8 +49,9 @@
 
       <div class="try-row">
         <span class="try-label">Try:</span>
-        <a href="#" class="try-link" id="tryTeluguBtn">Telugu article</a>
-        <a href="#" class="try-link" id="tryEnglishBtn">English article</a>
+        <a href="#" class="try-link" id="tryTeluguBtn" data-url="https://telugupeople.com/news/news.asp?newsID=108267">Telugu article</a>
+        <a href="#" class="try-link" id="tryEnglishBtn" data-url="https://telugupeople.com/news/news.asp?newsId=108330">English: The Paradise</a>
+        <a href="#" class="try-link" id="tryRc17Btn" data-url="https://www.telugupeople.com/news/news.asp?newsId=109199">English: Ram Charan RC17</a>
       </div>
 
       <!-- Loaded Article Metadata & Preview -->
@@ -134,8 +135,8 @@
           <span class="chip-label">Quick Prompts:</span>
           <button class="chip" data-q="హోంవర్క్ విషయంలో ఉపాధ్యాయురాలు ఏం చేసింది?">హోంవర్క్ విషయంలో...</button>
           <button class="chip" data-q="బాలుడి పేరు ఏమిటి?">బాలుడి పేరు ఏమిటి?</button>
+          <button class="chip" data-q="Who attended the RC17 pooja launch ceremony?">Who attended RC17 launch?</button>
           <button class="chip" data-q="Who joined Nani in The Paradise?">Who joined Nani?</button>
-          <button class="chip" data-q="Who is directing The Paradise film?">Who is directing?</button>
           <button class="chip" data-q="Summarize this article">📄 Summarize Article</button>
           <button class="chip" data-q="ఈ కథనం పూర్తి సారాంశం చెప్పండి">📄 తెలుగు సారాంశం</button>
         </div>
@@ -211,6 +212,6 @@
     <p>Team Vaani · VIT-AP University · Bilingual News Retrieval-Augmented Generation Benchmark</p>
   </footer>
 
-  <script src="/static/app.js?v=6"></script>
+  <script src="/static/app.js?v=7"></script>
 </body>
 </html>

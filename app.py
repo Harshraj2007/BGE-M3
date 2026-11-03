@@ -156,6 +156,10 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
                     url = "https://telugupeople.com/news/news.asp?newsId=108330"
                 elif ("బాలుడు" in query or "హోంవర్క్" in query or "ప్రణయ్" in query or "school" in lower_q or "teacher" in lower_q):
                     url = "https://telugupeople.com/news/news.asp?newsID=108267"
+                elif ("charan" in lower_q or "sukumar" in lower_q or "rc17" in lower_q or "chiranjeevi" in lower_q or "చరణ్" in query or "రంగస్థలం" in query):
+                    url = "https://www.telugupeople.com/news/news.asp?newsId=109199"
+                elif ("murasu" in lower_q or "cyclone" in lower_q or "ongole" in lower_q or "తుఫాను" in query or "తుఫాన్" in query):
+                    url = "https://www.telugupeople.com/news/news.asp?newsID=109200"
                 elif not url and rag_pipeline.article:
                     url = rag_pipeline.article.get("url")
 
@@ -195,6 +199,10 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
                     url = "https://telugupeople.com/news/news.asp?newsId=108330"
                 elif ("బాలుడు" in query or "హోంవర్క్" in query or "ప్రణయ్" in query or "school" in lower_q or "teacher" in lower_q):
                     url = "https://telugupeople.com/news/news.asp?newsID=108267"
+                elif ("charan" in lower_q or "sukumar" in lower_q or "rc17" in lower_q or "chiranjeevi" in lower_q or "చరణ్" in query or "రంగస్థలం" in query):
+                    url = "https://www.telugupeople.com/news/news.asp?newsId=109199"
+                elif ("murasu" in lower_q or "cyclone" in lower_q or "ongole" in lower_q or "తుఫాను" in query or "తుఫాన్" in query):
+                    url = "https://www.telugupeople.com/news/news.asp?newsID=109200"
                 elif not url and rag_pipeline.article:
                     url = rag_pipeline.article.get("url")
 

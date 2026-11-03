@@ -131,14 +131,15 @@ document.addEventListener("DOMContentLoaded", () => {
     loadArticle(articleUrlInput.value.trim());
   });
 
-  tryTeluguBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    loadArticle("https://telugupeople.com/news/news.asp?newsID=108267");
-  });
-
-  tryEnglishBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    loadArticle("https://telugupeople.com/news/news.asp?newsId=108330");
+  document.querySelectorAll(".try-link").forEach(link => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetUrl = link.getAttribute("data-url");
+      if (targetUrl) {
+        articleUrlInput.value = targetUrl;
+        loadArticle(targetUrl);
+      }
+    });
   });
 
   toggleArticleBodyBtn.addEventListener("click", () => {
