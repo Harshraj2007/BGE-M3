@@ -462,13 +462,16 @@ Question:
             if "speed" in lower_q or "wind" in lower_q or "వేగం" in query:
                 return "తీరం దాటే సమయంలో గంటకు 100 నుండి 110 కి.మీ వేగంతో పెనుగాలులు వీచాయి." if user_lang == "te" else "The cyclone brought sustained winds of 100-110 kmph, with gusts reaching up to 120 kmph at landfall."
 
-        # Default grounded response using the most relevant retrieved chunk
+        # Smart grounded response using the most relevant sentence from retrieved chunks
         top_chunk = retrieved_chunks[0]["text"]
-        first_sentence = top_chunk.split(".")[0].strip()
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?।])\s+', top_chunk) if len(s.strip()) > 15]
+        q_tokens = set(re.findall(r'\w+', query.lower()))
+        best_sentence = max(sentences, key=lambda s: len(set(re.findall(r'\w+', s.lower())) & q_tokens)) if sentences else top_chunk.split(".")[0].strip()
+
         if user_lang == "te":
-            return f"{first_sentence} అని వార్తా కథనంలో పేర్కొన్నారు."
+            return f"{best_sentence} అని వార్తా కథనంలో పేర్కొన్నారు."
         else:
-            return f"According to the article: {first_sentence}."
+            return f"According to the article: {best_sentence}."
 
 
 # Singleton instance

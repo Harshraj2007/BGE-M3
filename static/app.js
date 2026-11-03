@@ -78,19 +78,45 @@ document.addEventListener("DOMContentLoaded", () => {
   cardBge.addEventListener("click", () => selectModel("bge_m3"));
 
   // ============================================================
-  // Article Loading
+  // Article Loading (URL or Custom Text)
   // ============================================================
-  async function loadArticle(url) {
-    if (!url) return;
-    articleUrlInput.value = url;
+  const tabUrlBtn = document.getElementById("tabUrlBtn");
+  const tabTextBtn = document.getElementById("tabTextBtn");
+  const urlInputContainer = document.getElementById("urlInputContainer");
+  const textInputContainer = document.getElementById("textInputContainer");
+  const customArticleText = document.getElementById("customArticleText");
+  const loadCustomTextBtn = document.getElementById("loadCustomTextBtn");
+
+  if (tabUrlBtn && tabTextBtn) {
+    tabUrlBtn.addEventListener("click", () => {
+      tabUrlBtn.classList.add("active");
+      tabTextBtn.classList.remove("active");
+      urlInputContainer.classList.remove("hidden");
+      textInputContainer.classList.add("hidden");
+    });
+    tabTextBtn.addEventListener("click", () => {
+      tabTextBtn.classList.add("active");
+      tabUrlBtn.classList.remove("active");
+      textInputContainer.classList.remove("hidden");
+      urlInputContainer.classList.add("hidden");
+    });
+  }
+
+  async function loadArticle(url, customText = null) {
+    if (!url && !customText) return;
+    if (url) articleUrlInput.value = url;
     loadArticleBtn.disabled = true;
     loadArticleBtn.textContent = "Loading...";
+    if (loadCustomTextBtn) {
+      loadCustomTextBtn.disabled = true;
+      loadCustomTextBtn.textContent = "Indexing...";
+    }
 
     try {
       const resp = await fetch("/api/load-article", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url })
+        body: JSON.stringify({ url: url || "", text: customText || "" })
       });
 
       if (!resp.ok) {
@@ -124,12 +150,27 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       loadArticleBtn.disabled = false;
       loadArticleBtn.textContent = "Load article";
+      if (loadCustomTextBtn) {
+        loadCustomTextBtn.disabled = false;
+        loadCustomTextBtn.textContent = "Load & Index Article";
+      }
     }
   }
 
   loadArticleBtn.addEventListener("click", () => {
     loadArticle(articleUrlInput.value.trim());
   });
+
+  if (loadCustomTextBtn) {
+    loadCustomTextBtn.addEventListener("click", () => {
+      const txt = customArticleText.value.trim();
+      if (!txt) {
+        alert("Please paste the article text first.");
+        return;
+      }
+      loadArticle("", txt);
+    });
+  }
 
   document.querySelectorAll(".try-link").forEach(link => {
     link.addEventListener("click", (e) => {

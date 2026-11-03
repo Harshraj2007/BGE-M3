@@ -12,7 +12,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 # Local imports
-from extractor import extract_article, chunk_text
+from extractor import extract_article, chunk_text, detect_language
 from rag_engine import rag_pipeline, MODEL_SPECS
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -114,12 +114,29 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
 
         if url_path == "/api/load-article" or url_path.endswith("/load-article"):
             url = payload.get("url", "").strip()
-            if not url:
-                self._send_json({"error": "URL parameter is required"}, status=400)
+            raw_text = payload.get("text", "").strip()
+            custom_title = payload.get("title", "").strip()
+
+            if not url and not raw_text:
+                self._send_json({"error": "URL or article text is required"}, status=400)
                 return
 
             try:
-                article = extract_article(url)
+                if raw_text:
+                    lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+                    title = custom_title or (lines[0][:100] if lines else "Custom Article")
+                    lang = detect_language(raw_text)
+                    article = {
+                        "url": url or "custom://article",
+                        "news_id": "custom",
+                        "title": title,
+                        "category": "User Input",
+                        "language": lang,
+                        "text": raw_text
+                    }
+                else:
+                    article = extract_article(url)
+
                 chunks = chunk_text(article["text"])
                 rag_pipeline.set_article(article, chunks)
 
