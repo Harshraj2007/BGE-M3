@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bilingual Telugu–English News Assistant</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Blue Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="header-titles">
+        <h1>Bilingual Telugu–English News Assistant</h1>
+        <p class="subtitle">Team Vaani - VIT-AP University - retrieval-augmented generation over TeluguPeople articles</p>
+      </div>
+      <div class="header-actions">
+        <button class="badge-pill" id="genToggleBtn" title="Toggle grounded answer generation">
+          <span class="status-dot"></span> Generation enabled
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Cards -->
+  <main class="main-container">
+
+    <!-- STEP 1: Load an article -->
+    <section class="step-card" id="step1">
+      <div class="step-header">
+        <span class="step-number">1</span>
+        <h2>Load an article</h2>
+      </div>
+
+      <div class="input-row">
+        <input 
+          type="text" 
+          id="articleUrlInput" 
+          class="url-input" 
+          value="https://telugupeople.com/news/news.asp?newsID=108267" 
+          placeholder="https://telugupeople.com/news/news.asp?newsID=..."
+        >
+        <button id="loadArticleBtn" class="btn btn-primary">Load article</button>
+      </div>
+
+      <div class="try-row">
+        <span class="try-label">Try:</span>
+        <a href="#" class="try-link" id="tryTeluguBtn">Telugu article</a>
+        <a href="#" class="try-link" id="tryEnglishBtn">English article</a>
+      </div>
+
+      <!-- Loaded Article Metadata & Preview -->
+      <div id="articleMetaBox" class="article-meta-box hidden">
+        <div class="meta-header">
+          <div class="meta-title-group">
+            <span class="badge badge-lang" id="metaLangBadge">TE</span>
+            <span class="badge badge-cat" id="metaCategory">General News</span>
+            <h3 id="metaTitle" class="meta-title">Article Title</h3>
+          </div>
+          <button id="toggleArticleBodyBtn" class="btn-text">View Text ▼</button>
+        </div>
+        <div class="meta-stats">
+          <span><strong>Words:</strong> <span id="metaWords">0</span></span>
+          <span><strong>Chunks:</strong> <span id="metaChunks">0</span></span>
+          <span><strong>Source ID:</strong> <span id="metaNewsId">108267</span></span>
+        </div>
+        <div id="articleBodyPreview" class="article-body-preview hidden">
+          <p id="articleBodyText"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: Choose the embedding model -->
+    <section class="step-card" id="step2">
+      <div class="step-header">
+        <span class="step-number">2</span>
+        <h2>Choose the embedding model</h2>
+      </div>
+      <p class="step-desc">
+        Only the encoder changes between arms. The corpus, the chunking rules, the index type and the generator are held fixed.
+      </p>
+
+      <div class="model-cards-grid">
+        <!-- Model Card 1: multilingual-E5-base -->
+        <div class="model-card" id="cardE5" data-model="e5">
+          <div class="model-card-header">
+            <span class="model-name">multilingual-E5-base</span>
+            <span class="badge badge-loaded">loaded</span>
+          </div>
+          <div class="model-hf-name">intfloat/multilingual-e5-base</div>
+          <div class="model-specs">768-dim · max 512 tokens · asymmetric prefixes</div>
+          <div class="model-revision">revision: d12875059715...</div>
+          <div class="model-note">Pinned revision. Requires asymmetric query/passage prefixes.</div>
+        </div>
+
+        <!-- Model Card 2: BGE-M3 (Selected by default as in screenshot) -->
+        <div class="model-card selected" id="cardBge" data-model="bge_m3">
+          <div class="model-card-header">
+            <span class="model-name">BGE-M3</span>
+            <span class="badge badge-loaded">loaded</span>
+          </div>
+          <div class="model-hf-name">BAAI/bge-m3</div>
+          <div class="model-specs">1024-dim · max 8192 tokens · prefix-free</div>
+          <div class="model-revision">revision: not pinned</div>
+          <div class="model-note">Prefix-free. Revision not pinned in the arm as received.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: Ask a question -->
+    <section class="step-card" id="step3">
+      <div class="step-header">
+        <span class="step-number">3</span>
+        <h2>Ask a question</h2>
+      </div>
+
+      <div class="question-container">
+        <div class="query-input-wrap">
+          <input 
+            type="text" 
+            id="questionInput" 
+            class="question-input" 
+            placeholder="Ask a question in Telugu, English, or Code-mixed (or type 'summary')..."
+          >
+          <button id="micBtn" class="btn-icon" title="Voice Input (Microphone)">🎤</button>
+        </div>
+
+        <!-- Suggested Prompt Chips -->
+        <div class="prompt-chips">
+          <span class="chip-label">Quick Prompts:</span>
+          <button class="chip" data-q="హోంవర్క్ విషయంలో ఉపాధ్యాయురాలు ఏం చేసింది?">హోంవర్క్ విషయంలో...</button>
+          <button class="chip" data-q="బాలుడి పేరు ఏమిటి?">బాలుడి పేరు ఏమిటి?</button>
+          <button class="chip" data-q="Who joined Nani in The Paradise?">Who joined Nani?</button>
+          <button class="chip" data-q="Who is directing The Paradise film?">Who is directing?</button>
+          <button class="chip" data-q="Summarize this article">📄 Summarize Article</button>
+        </div>
+
+        <!-- Action Buttons Row -->
+        <div class="actions-row">
+          <button id="askBtn" class="btn btn-primary">Ask Question</button>
+          <button id="summarizeBtn" class="btn btn-secondary">Summarize Article</button>
+          <button id="compareBtn" class="btn btn-outline" title="Run query across both E5 and BGE-M3">⚡ Compare E5 vs BGE-M3</button>
+        </div>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div id="loadingIndicator" class="loading-box hidden">
+        <div class="spinner"></div>
+        <span id="loadingText">Retrieving with BGE-M3 & generating response...</span>
+      </div>
+
+      <!-- Results Display Section -->
+      <div id="resultsSection" class="results-section hidden">
+        
+        <!-- Answer Card -->
+        <div class="answer-card">
+          <div class="answer-header">
+            <span class="answer-label">Assistant Response</span>
+            <div class="audio-controls">
+              <button id="playAudioBtn" class="btn btn-audio">🔊 Listen (Voice)</button>
+              <audio id="ttsAudio" class="hidden" controls></audio>
+            </div>
+          </div>
+          <div id="answerText" class="answer-text">
+            Answer text will appear here...
+          </div>
+          <div class="answer-meta-footer">
+            <span id="retrievalModelBadge" class="tag-badge">Model: BGE-M3</span>
+            <span id="retrievalDimBadge" class="tag-badge">Dim: 1024d</span>
+            <span id="retrievalLatencyBadge" class="tag-badge">Retrieval: 48.2 ms</span>
+          </div>
+        </div>
+
+        <!-- Side-by-Side Comparison View (When Compare clicked) -->
+        <div id="comparisonBox" class="comparison-box hidden">
+          <h3>Dual-Model Retrieval Shootout</h3>
+          <div class="comparison-grid">
+            <div class="comp-col">
+              <h4>multilingual-E5-base (768d)</h4>
+              <div class="comp-meta" id="e5CompMeta">Latency: -- ms</div>
+              <div class="comp-chunks" id="e5CompChunks"></div>
+            </div>
+            <div class="comp-col">
+              <h4>BGE-M3 (1024d)</h4>
+              <div class="comp-meta" id="bgeCompMeta">Latency: -- ms</div>
+              <div class="comp-chunks" id="bgeCompChunks"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Retrieved Passages / Evidence Section -->
+        <div class="retrieval-evidence">
+          <h3>Retrieved Passages from Article</h3>
+          <div id="chunksList" class="chunks-list">
+            <!-- Dynamically populated chunks -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>Team Vaani · VIT-AP University · Bilingual News Retrieval-Augmented Generation Benchmark</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
