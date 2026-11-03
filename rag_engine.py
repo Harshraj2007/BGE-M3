@@ -545,7 +545,8 @@ Instructions:
         is_analytical = any(k in lower_q for k in [
             'how should', 'position', 'grounded', 'spectacle', 'scale', 'story-first', 
             'grand', 'rrr', 'strategy', 'future', 'expect', 'opinion', 'analysis', 'compare',
-            'approach', 'balance', 'significance', 'impact', 'విశ్లేషణ'
+            'approach', 'balance', 'significance', 'impact', 'విశ్లేషణ', 'కథా', 'స్పెక్టాకిల్',
+            'స్థానం', 'పాన్-ఇండియా'
         ])
 
         # 1. RC17 / Ram Charan strategic positioning & scale analysis
