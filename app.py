@@ -80,7 +80,7 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
                 self.send_error(404, "Not Found")
 
     def do_POST(self):
-        url_path = urllib.parse.urlparse(self.path).path
+        url_path = urllib.parse.urlparse(self.path).path.rstrip("/")
         content_length = int(self.headers.get("Content-Length", 0))
         raw_body = self.rfile.read(content_length) if content_length > 0 else b"{}"
 
@@ -89,7 +89,7 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
         except Exception:
             payload = {}
 
-        if url_path == "/api/load-article":
+        if url_path == "/api/load-article" or url_path.endswith("/load-article"):
             url = payload.get("url", "").strip()
             if not url:
                 self._send_json({"error": "URL parameter is required"}, status=400)
@@ -108,7 +108,7 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"error": str(e)}, status=500)
 
-        elif url_path == "/api/switch-model":
+        elif url_path == "/api/switch-model" or url_path.endswith("/switch-model"):
             model_id = payload.get("model_id", "bge_m3")
             try:
                 spec = rag_pipeline.set_active_model(model_id)
@@ -116,7 +116,7 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
 
-        elif url_path == "/api/query":
+        elif url_path == "/api/query" or url_path.endswith("/query"):
             query = payload.get("query", "").strip()
             model_id = payload.get("model_id", rag_pipeline.active_model_id)
             is_summary = payload.get("is_summary", False)
@@ -146,7 +146,7 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"error": str(e)}, status=500)
 
-        elif url_path == "/api/compare":
+        elif url_path == "/api/compare" or url_path.endswith("/compare"):
             query = payload.get("query", "").strip() or "General overview"
             try:
                 e5_retrieval = rag_pipeline.retrieve(query, model_id="e5", top_k=3)

@@ -1,0 +1,3 @@
+# Lightweight serverless dependencies for Vercel deployment
+# The core RAG engine uses high-precision standard library vector maths
+# ensuring instant cold-starts under Vercel's 250MB serverless limit.

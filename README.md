@@ -68,6 +68,26 @@ print(f"🚀 Live Public URL: {public_url}")
 
 ---
 
+## 🌐 Deploy to Vercel
+
+This repository is pre-configured for zero-friction Vercel serverless deployment:
+
+### Option 1: Import via Vercel Web Dashboard (Recommended)
+1. Log in to [Vercel](https://vercel.com/dashboard).
+2. Click **"Add New..."** → **"Project"**.
+3. Import your GitHub repository: **`Harshraj2007/BGE-M3`**.
+4. Keep the default settings (Framework Preset: **Other**; Root Directory: `./`).
+5. Click **"Deploy"**. Vercel will deploy the site and assign a live production URL (e.g., `https://bge-m3.vercel.app`).
+
+### Option 2: Deploy from Terminal
+```bash
+cd /Users/harshrajnago/.gemini/antigravity/scratch/telugupeople_web
+npx vercel
+```
+Follow the command-line prompts to deploy.
+
+---
+
 ## 📊 Embedding Model Shootout Summary
 
 | Parameter | `multilingual-E5-base` | `BGE-M3` |
