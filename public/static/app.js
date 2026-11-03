@@ -148,8 +148,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Prompt Chips
   promptChips.forEach(chip => {
-    chip.addEventListener("click", () => {
-      questionInput.value = chip.getAttribute("data-q");
+    chip.addEventListener("click", async () => {
+      const q = chip.getAttribute("data-q");
+      questionInput.value = q;
+
+      // Smart article auto-switch if prompt belongs to the other article
+      const lower = q.toLowerCase();
+      if ((lower.includes("nani") || lower.includes("paradise")) && !articleUrlInput.value.includes("108330")) {
+        await loadArticle("https://telugupeople.com/news/news.asp?newsId=108330");
+      } else if ((q.includes("బాలుడు") || q.includes("హోంవర్క్") || q.includes("ప్రణయ్")) && !articleUrlInput.value.includes("108267")) {
+        await loadArticle("https://telugupeople.com/news/news.asp?newsID=108267");
+      }
+
       executeAskQuestion();
     });
   });
@@ -176,9 +186,19 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({
           query: isSummary ? "Summarize this article" : query,
           model_id: activeModel,
+          url: articleUrlInput.value.trim(),
           is_summary: isSummary
         })
       });
+
+      if (!resp.ok) {
+        let errMsg = `Status ${resp.status}`;
+        try {
+          const errData = await resp.json();
+          if (errData.error) errMsg = errData.error;
+        } catch(e) {}
+        throw new Error(errMsg);
+      }
 
       const data = await resp.json();
       currentAnswer = data.answer;
@@ -194,6 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderChunks(data.chunks || []);
 
       resultsSection.classList.remove("hidden");
+      resultsSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } catch (err) {
       alert(`Query failed: ${err.message}`);
     } finally {
@@ -243,10 +264,56 @@ document.addEventListener("DOMContentLoaded", () => {
       const resp = await fetch("/api/compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({
+          query,
+          url: articleUrlInput.value.trim()
+        })
       });
 
+      if (!resp.ok) {
+        let errMsg = `Status ${resp.status}`;
+        try {
+          const errData = await resp.json();
+          if (errData.error) errMsg = errData.error;
+        } catch(e) {}
+        throw new Error(errMsg);
+      }
+
       const data = await resp.json();
+
+      // Render E5 side
+      e5CompMeta.textContent = `Retrieval Latency: ${data.e5.latency_ms} ms | Dim: 768d`;
+      e5CompChunks.innerHTML = data.e5.results.map(r => `
+        <div class="chunk-card" style="margin-top: 8px;">
+          <div class="chunk-header">
+            <span>Rank #${r.rank} (${r.chunk_id})</span>
+            <span class="score-badge">${r.score}</span>
+          </div>
+          <div class="chunk-text" style="font-size: 13px;">${r.text.substring(0, 160)}...</div>
+        </div>
+      `).join("");
+
+      // Render BGE side
+      bgeCompMeta.textContent = `Retrieval Latency: ${data.bge_m3.latency_ms} ms | Dim: 1024d`;
+      bgeCompChunks.innerHTML = data.bge_m3.results.map(r => `
+        <div class="chunk-card" style="margin-top: 8px;">
+          <div class="chunk-header">
+            <span>Rank #${r.rank} (${r.chunk_id})</span>
+            <span class="score-badge">${r.score}</span>
+          </div>
+          <div class="chunk-text" style="font-size: 13px;">${r.text.substring(0, 160)}...</div>
+        </div>
+      `).join("");
+
+      comparisonBox.classList.remove("hidden");
+      resultsSection.classList.remove("hidden");
+      comparisonBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (err) {
+      alert(`Comparison failed: ${err.message}`);
+    } finally {
+      loadingIndicator.classList.add("hidden");
+    }
+  });
 
       // Render E5 side
       e5CompMeta.textContent = `Retrieval Latency: ${data.e5.latency_ms} ms | Dim: 768d`;

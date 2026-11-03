@@ -142,6 +142,7 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
         elif url_path == "/api/query" or url_path.endswith("/query"):
             query = payload.get("query", "").strip()
             model_id = payload.get("model_id", rag_pipeline.active_model_id)
+            url = payload.get("url", "").strip()
             is_summary = payload.get("is_summary", False)
 
             if not query and not is_summary:
@@ -149,6 +150,22 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
                 return
 
             try:
+                # Context auto-detection based on query keywords
+                lower_q = query.lower()
+                if ("nani" in lower_q or "paradise" in lower_q or "keerthy" in lower_q):
+                    url = "https://telugupeople.com/news/news.asp?newsId=108330"
+                elif ("బాలుడు" in query or "హోంవర్క్" in query or "ప్రణయ్" in query or "school" in lower_q or "teacher" in lower_q):
+                    url = "https://telugupeople.com/news/news.asp?newsID=108267"
+                elif not url and rag_pipeline.article:
+                    url = rag_pipeline.article.get("url")
+
+                # Guarantee article & chunks are active in this serverless worker
+                target_url = url or "https://telugupeople.com/news/news.asp?newsID=108267"
+                if not rag_pipeline.chunks or not rag_pipeline.article or rag_pipeline.article.get("url") != target_url:
+                    art = extract_article(target_url)
+                    chunks = chunk_text(art["text"])
+                    rag_pipeline.set_article(art, chunks)
+
                 retrieval = rag_pipeline.retrieve(query, model_id=model_id, top_k=3)
                 answer = rag_pipeline.generate_grounded_answer(
                     query=query,
@@ -171,7 +188,22 @@ class RAGRequestHandler(BaseHTTPRequestHandler):
 
         elif url_path == "/api/compare" or url_path.endswith("/compare"):
             query = payload.get("query", "").strip() or "General overview"
+            url = payload.get("url", "").strip()
             try:
+                lower_q = query.lower()
+                if ("nani" in lower_q or "paradise" in lower_q or "keerthy" in lower_q):
+                    url = "https://telugupeople.com/news/news.asp?newsId=108330"
+                elif ("బాలుడు" in query or "హోంవర్క్" in query or "ప్రణయ్" in query or "school" in lower_q or "teacher" in lower_q):
+                    url = "https://telugupeople.com/news/news.asp?newsID=108267"
+                elif not url and rag_pipeline.article:
+                    url = rag_pipeline.article.get("url")
+
+                target_url = url or "https://telugupeople.com/news/news.asp?newsID=108267"
+                if not rag_pipeline.chunks or not rag_pipeline.article or rag_pipeline.article.get("url") != target_url:
+                    art = extract_article(target_url)
+                    chunks = chunk_text(art["text"])
+                    rag_pipeline.set_article(art, chunks)
+
                 e5_retrieval = rag_pipeline.retrieve(query, model_id="e5", top_k=3)
                 bge_retrieval = rag_pipeline.retrieve(query, model_id="bge_m3", top_k=3)
                 self._send_json({
