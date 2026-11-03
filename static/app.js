@@ -94,7 +94,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!resp.ok) {
-        throw new Error(`Failed to load article: ${resp.statusText}`);
+        let errMsg = `Status ${resp.status}`;
+        try {
+          const errData = await resp.json();
+          if (errData.error) errMsg = errData.error;
+        } catch(e) {}
+        throw new Error(errMsg);
       }
 
       const data = await resp.json();
